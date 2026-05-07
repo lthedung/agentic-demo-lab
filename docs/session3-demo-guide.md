@@ -20,6 +20,76 @@ npm run coverage
 npm run build
 ```
 
+## Cách tạo SonarQube URL và token
+
+### Trường hợp dùng SonarQube Server nội bộ
+
+`SONAR_HOST_URL` là địa chỉ web UI của SonarQube Server mà GitLab Runner có thể truy cập được.
+
+Ví dụ:
+
+```text
+http://sonarqube.company.local:9000
+https://sonarqube.company.com
+```
+
+Cách lấy URL:
+
+1. Mở SonarQube trên browser.
+2. Copy phần origin của URL, gồm protocol, host và port nếu có.
+3. Không copy thêm path như `/projects`, `/dashboard`, hoặc `/api`.
+
+Ví dụ nếu browser đang mở:
+
+```text
+https://sonarqube.company.com/dashboard?id=gitlab-cicd-session3-demo
+```
+
+Thì GitLab variable cần đặt là:
+
+```text
+SONAR_HOST_URL=https://sonarqube.company.com
+```
+
+Cách tạo token:
+
+1. Đăng nhập SonarQube bằng user có quyền phân tích project.
+2. Vào avatar/user menu ở góc phải.
+3. Chọn **My Account** hoặc **My Profile**.
+4. Mở tab **Security**.
+5. Ở phần token, tạo token mới cho CI/CD scanner.
+6. Copy token ngay sau khi tạo vì thường token chỉ hiển thị một lần.
+7. Lưu token vào GitLab CI/CD Variables với key `SONAR_TOKEN`.
+
+### Trường hợp dùng SonarQube Cloud
+
+Với SonarQube Cloud, URL thường dùng cho scanner là:
+
+```text
+SONAR_HOST_URL=https://sonarcloud.io
+```
+
+Cách tạo token tương tự:
+
+1. Đăng nhập SonarQube Cloud.
+2. Vào user/account menu.
+3. Mở **Security**.
+4. Generate token dùng cho CI analysis.
+5. Copy token và lưu vào GitLab CI/CD Variables với key `SONAR_TOKEN`.
+
+### Cấu hình trong GitLab
+
+Trong GitLab project:
+
+1. Vào **Settings** → **CI/CD**.
+2. Mở rộng phần **Variables**.
+3. Thêm variable `SONAR_HOST_URL`.
+4. Thêm variable `SONAR_TOKEN`.
+5. Với `SONAR_TOKEN`, bật **Masked** nếu GitLab cho phép.
+6. Bật **Protected** nếu pipeline chỉ chạy trên protected branch như `main` hoặc `release`.
+
+Không ghi trực tiếp token vào `.gitlab-ci.yml`, `sonar-project.properties`, README hoặc slide.
+
 ## Slides 1–2: Introduction và agenda
 
 Mở repository và giới thiệu nhanh:
