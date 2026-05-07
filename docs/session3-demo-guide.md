@@ -20,9 +20,87 @@ npm run coverage
 npm run build
 ```
 
+## Start SonarQube local bằng Docker
+
+Nếu chưa có SonarQube Server sẵn, có thể chạy local để demo.
+
+### Yêu cầu
+
+- Máy đã cài Docker.
+- Port `9000` trên máy local chưa bị service khác dùng.
+- Đây chỉ là setup demo/training, không dùng cho production.
+
+### Start container
+
+Chạy lệnh sau:
+
+```bash
+docker run -d --name sonarqube \
+  -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true \
+  -p 9000:9000 \
+  sonarqube:latest
+```
+
+Kiểm tra container:
+
+```bash
+docker ps --filter name=sonarqube
+```
+
+Xem log nếu server chưa lên:
+
+```bash
+docker logs -f sonarqube
+```
+
+Mở browser:
+
+```text
+http://localhost:9000
+```
+
+Đăng nhập lần đầu bằng tài khoản mặc định:
+
+```text
+username: admin
+password: admin
+```
+
+Sau khi đăng nhập, SonarQube sẽ yêu cầu đổi password admin.
+
+### Stop hoặc xóa container sau demo
+
+Stop container:
+
+```bash
+docker stop sonarqube
+```
+
+Start lại container đã stop:
+
+```bash
+docker start sonarqube
+```
+
+Xóa container nếu không dùng nữa:
+
+```bash
+docker rm -f sonarqube
+```
+
+### GitLab Runner truy cập SonarQube local
+
+Nếu GitLab Runner chạy trực tiếp trên cùng máy với Docker host, có thể dùng:
+
+```text
+SONAR_HOST_URL=http://localhost:9000
+```
+
+Nếu GitLab Runner chạy trong container khác, `localhost` bên trong runner không trỏ về SonarQube container. Khi đó cần dùng network/hostname mà runner truy cập được, ví dụ IP máy host hoặc service name trong cùng Docker network.
+
 ## Cách tạo SonarQube URL và token
 
-### Trường hợp dùng SonarQube Server nội bộ
+### Trường hợp dùng SonarQube Server nội bộ hoặc local
 
 `SONAR_HOST_URL` là địa chỉ web UI của SonarQube Server mà GitLab Runner có thể truy cập được.
 
