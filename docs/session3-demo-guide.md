@@ -151,10 +151,10 @@ Giải thích:
 
 Demo coverage threshold fail:
 
-Mở `vitest.config.ts`, đổi tạm:
+Mở `vitest.config.ts`, đổi tạm threshold cao hơn report hiện tại:
 
 ```ts
-lines: 100,
+lines: 101,
 ```
 
 Chạy lại:
@@ -163,7 +163,7 @@ Chạy lại:
 npm run coverage
 ```
 
-Giải thích: coverage threshold có thể làm pipeline fail nếu team muốn enforce tiêu chuẩn chất lượng.
+Giải thích: coverage threshold có thể làm pipeline fail nếu team muốn enforce tiêu chuẩn chất lượng. Ở demo này, `101` chắc chắn fail vì coverage không thể vượt quá 100%.
 
 Sau demo, revert threshold về `80`.
 
@@ -192,6 +192,8 @@ sonar-scan:
   dependencies:
     - unit-test
 ```
+
+Trong demo này, `unit-test` chạy `npm run test:ci`, nên job này vừa tạo JUnit report vừa tạo `coverage/lcov.info` để `sonar-scan` đọc lại qua artifact dependency.
 
 Nhấn mạnh:
 

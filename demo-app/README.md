@@ -42,10 +42,10 @@ The test should fail. Revert the assertion after the demo.
 
 ### Coverage threshold failure
 
-Open `vitest.config.ts` and temporarily raise the line threshold:
+Open `vitest.config.ts` and temporarily raise the line threshold above the current report:
 
 ```ts
-lines: 100,
+lines: 101,
 ```
 
 Run:
@@ -54,7 +54,7 @@ Run:
 npm run coverage
 ```
 
-Coverage should fail if the project does not reach 100%. Revert the threshold after the demo.
+Coverage should fail because coverage cannot exceed 100%. Revert the threshold after the demo.
 
 ## SonarQube variables
 
