@@ -1,0 +1,18 @@
+{
+  "name": "gitlab-cicd-session3-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ci": "vitest run --coverage --reporter=default --reporter=junit --outputFile=reports/junit.xml",
+    "coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}
