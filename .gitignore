@@ -1,6 +1,0 @@
-.worktrees/
-.superpowers/
-node_modules/
-.next/
-out/
-.env*.local
