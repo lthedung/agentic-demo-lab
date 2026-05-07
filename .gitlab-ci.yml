@@ -1,0 +1,60 @@
+stages:
+  - test
+  - quality
+  - build
+
+default:
+  tags:
+    - runner_01
+
+unit-test:
+  stage: test
+  image: node:20
+  script:
+    - cd demo-app
+    - npm ci
+    - npm run test:ci
+  artifacts:
+    when: always
+    reports:
+      junit: demo-app/reports/junit.xml
+    paths:
+      - demo-app/reports/
+      - demo-app/coverage/
+    expire_in: 1 week
+
+coverage-check:
+  stage: test
+  image: node:20
+  script:
+    - cd demo-app
+    - npm ci
+    - npm run coverage
+  artifacts:
+    when: always
+    paths:
+      - demo-app/coverage/
+    expire_in: 1 week
+
+sonar-scan:
+  stage: quality
+  image: sonarsource/sonar-scanner-cli:latest
+  dependencies:
+    - unit-test
+  script:
+    - cd demo-app
+    - >
+      sonar-scanner
+      -Dsonar.host.url=$SONAR_HOST_URL
+      -Dsonar.token=$SONAR_TOKEN
+      -Dsonar.qualitygate.wait=true
+  rules:
+    - if: '$SONAR_HOST_URL && $SONAR_TOKEN'
+
+build-demo:
+  stage: build
+  image: node:20
+  script:
+    - cd demo-app
+    - npm ci
+    - npm run build
