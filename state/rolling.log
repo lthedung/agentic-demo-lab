@@ -1,0 +1,9 @@
+updating instance 1 of 4
+health check passed for instance 1
+updating instance 2 of 4
+health check passed for instance 2
+updating instance 3 of 4
+health check passed for instance 3
+updating instance 4 of 4
+health check passed for instance 4
+rollout complete

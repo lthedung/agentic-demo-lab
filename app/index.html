@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitLab CI/CD Session 4 Demo</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 32px;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .card {
+        max-width: 760px;
+        margin: 0 auto;
+        background: #1e293b;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.35);
+      }
+      .badge {
+        display: inline-block;
+        margin: 4px 8px 4px 0;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #334155;
+      }
+      .value {
+        color: #38bdf8;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>__APP_NAME__</h1>
+      <p>Workshop demo for GitLab CI/CD Session 4.</p>
+      <p class="badge">Version: <span class="value">__VERSION__</span></p>
+      <p class="badge">Environment: <span class="value">__ENVIRONMENT__</span></p>
+      <p class="badge">Deploy time: <span class="value">__DEPLOY_TIME__</span></p>
+      <p class="badge">Strategy: <span class="value">__STRATEGY__</span></p>
+      <p class="badge">Active color: <span class="value">__ACTIVE_COLOR__</span></p>
+    </main>
+  </body>
+</html>

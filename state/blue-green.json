@@ -1,0 +1,7 @@
+{
+  "version": "blue-green-demo",
+  "environment": "production",
+  "deployTime": "2026-05-14T16:27:50Z",
+  "strategy": "blue-green",
+  "activeColor": "green"
+}
