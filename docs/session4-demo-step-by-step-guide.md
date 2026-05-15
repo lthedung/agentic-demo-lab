@@ -151,7 +151,7 @@ Giải thích theo đúng rules hiện tại:
 - `develop` deploy `dev` theo [`.gitlab-ci.yml:45-53`](../.gitlab-ci.yml#L45-L53)
 - `main` deploy `staging` theo [`.gitlab-ci.yml:55-63`](../.gitlab-ci.yml#L55-L63)
 - tag `v*` mở manual production deploy theo [`.gitlab-ci.yml:65-74`](../.gitlab-ci.yml#L65-L74)
-- branch `main` còn có 2 job manual cho strategy theo [`.gitlab-ci.yml:76-93`](../.gitlab-ci.yml#L76-L93)
+- release tag pipeline còn có 2 job manual cho production strategy demos theo [`.gitlab-ci.yml:76-93`](../.gitlab-ci.yml#L76-L93)
 
 ## 7. Thứ tự setup và demo end-to-end
 Nếu bạn muốn trình bày từ đầu đến cuối theo đúng flow setup trước, demo sau, hãy đi theo thứ tự này:
@@ -163,8 +163,8 @@ Nếu bạn muốn trình bày từ đầu đến cuối theo đúng flow setup 
 6. Tạo hoặc push `develop` để cho học viên thấy deploy `dev`.
 7. Push thêm vào `main` để cho học viên thấy deploy `staging`.
 8. Tạo tag `v1.0.0` để cho học viên thấy manual production gate.
-9. Chạy `simulate_rolling_update` trên pipeline `main`.
-10. Chạy `simulate_blue_green` trên pipeline `main`.
+9. Chạy `simulate_rolling_update` trên pipeline của release tag.
+10. Chạy `simulate_blue_green` trên pipeline của release tag.
 
 ## 8. Demo 1 - Feature branch chỉ chạy validation
 
@@ -327,16 +327,27 @@ Bấm **Play** cho job `deploy_production`.
 ### 11.7. Sau khi job chạy xong
 Mở **Operate > Environments** và chỉ cho học viên thấy `production`.
 
-### 11.8. Câu nói gợi ý
-> Đây là mô hình thường gặp trong doanh nghiệp: build và kiểm thử có thể tự động, nhưng bước vào production vẫn cần approval để đáp ứng kiểm soát thay đổi.
+### 11.8. Demo rollback production thật trên GitLab UI
+Ngay sau khi demo deploy production, bạn có thể demo rollback thật luôn:
+1. Ở cùng pipeline tag release, chỉ cho học viên thấy job `rollback_production`.
+2. Giải thích rằng job này sẽ đưa production về version trước đó đã được lưu trong state history.
+3. Bấm **Play** cho job `rollback_production`.
+4. Mở log job để học viên thấy các dòng như:
+   - `Current production version: v1.0.1`
+   - `Rolling back to: v1.0.0`
+   - `Production rollback complete`
+5. Mở lại **Operate > Environments** và giải thích rằng production đã quay về version trước.
+
+### 11.9. Câu nói gợi ý
+> Đây là mô hình thường gặp trong doanh nghiệp: build và kiểm thử có thể tự động, nhưng bước vào production vẫn cần approval để đáp ứng kiểm soát thay đổi. Và khi release có sự cố, rollback cũng phải là một thao tác thật, nhanh và rõ ràng trên pipeline.
 
 ## 12. Demo 5 - Rolling update simulation
 
 ### 12.1. Điều kiện chạy
-Dùng pipeline của branch `main` vì job strategy đang được bật manual trên `main`.
+Dùng pipeline của release tag vì job strategy hiện được bật manual trên cùng flow production release.
 
 ### 12.2. Trên GitLab UI
-- Mở pipeline mới nhất của `main`.
+- Mở pipeline của tag release vừa push, ví dụ `v1.0.0`.
 - Bấm manual job `simulate_rolling_update`.
 
 ### 12.3. Mở job log
@@ -357,7 +368,7 @@ Nhấn mạnh trade-off:
 ## 13. Demo 6 - Blue/Green simulation
 
 ### 13.1. Trên GitLab UI
-- Trong pipeline `main`, bấm manual job `simulate_blue_green`.
+- Trong pipeline của tag release, bấm manual job `simulate_blue_green`.
 
 ### 13.2. Mở job log
 Chỉ cho học viên các dòng:
@@ -375,7 +386,170 @@ Chỉ cho học viên các dòng:
 ### 13.5. Cách nói ngắn gọn
 > Rolling thì thay dần. Blue/green thì chuẩn bị sẵn môi trường mới rồi flip traffic.
 
-## 14. Cách giải thích file output để học viên dễ hình dung
+## 14. Demo 7 - Rollback thật trên GitLab UI
+
+### 14.1. Cách mở phần rollback
+Sau khi demo xong production, rolling, và blue/green, bạn có thể chuyển ý như sau:
+
+> Deploy xong chưa phải là hết việc. Điều quan trọng trong production là nếu bản mới có lỗi thì chúng ta phải rollback được thật, nhanh và rõ ràng ngay trên pipeline.
+
+### 14.2. Demo rollback production thật
+Đây là rollback theo version trước đó của production.
+
+Các bước demo trên lớp:
+1. Mở lại pipeline của tag release đã chạy `deploy_production`.
+2. Chỉ cho học viên thấy job manual `rollback_production`.
+3. Giải thích rằng job này dùng production history để quay về version trước đó.
+4. Bấm **Play** cho `rollback_production`.
+5. Mở log job và chỉ cho học viên các dòng:
+   - `Current production version: ...`
+   - `Rolling back to: ...`
+   - `Production rollback complete`
+6. Mở lại **Operate > Environments** hoặc artifact/state để cho học viên thấy production đã quay về version cũ.
+
+### 14.3. Điều kiện để rollback production chạy được
+Nói rõ với học viên:
+1. Production phải đã được deploy ít nhất 2 lần thì mới có current version và previous version rõ ràng.
+2. Nếu chưa có previous version, rollback sẽ không có đích để quay về.
+3. Vì đây là workshop demo, previous version được lưu trong `state/production-history.json`.
+
+### 14.4. Cách tập local trước buổi dạy cho rollback production
+Nếu muốn tập local trước khi lên lớp, bạn có thể chạy:
+
+```bash
+CI_COMMIT_TAG=v1.0.0 sh scripts/deploy-production.sh
+CI_COMMIT_TAG=v1.0.1 sh scripts/deploy-production.sh
+sh scripts/rollback-production.sh
+```
+
+### 14.5. Câu nói gợi ý cho rollback production
+> Rollback production ở đây không còn là giả định. Chúng ta có một manual job thật để đưa release hiện tại quay về release trước đó.
+
+### 14.6. Demo rollback blue/green thật
+Đây là rollback theo hướng chuyển active traffic về color trước đó.
+
+Các bước demo trên lớp:
+1. Ở pipeline của tag release, chạy `simulate_blue_green` trước.
+2. Mở log để học viên thấy flow `blue -> green`.
+3. Sau đó chỉ cho học viên thấy job manual `rollback_blue_green`.
+4. Bấm **Play** cho `rollback_blue_green`.
+5. Mở log job để học viên thấy dòng:
+   - `Current active environment: green`
+   - `Switching active environment: green -> blue`
+   - `Blue/green rollback complete`
+6. Giải thích rằng đây là rollback theo traffic switch, không nhất thiết phải build lại artifact mới.
+
+### 14.7. Cách tập local trước buổi dạy cho rollback blue/green
+Nếu muốn tập local trước khi lên lớp, bạn có thể chạy:
+
+```bash
+sh scripts/simulate-blue-green.sh
+sh scripts/rollback-blue-green.sh
+```
+
+### 14.8. Câu nói gợi ý cho blue/green rollback
+> Blue/green rollback nhanh vì mình không cần tạo release mới ngay. Việc đầu tiên là chuyển active traffic về màu cũ để khôi phục dịch vụ.
+
+### 14.9. Rollback case 1 - Smoke test fail ngay sau deploy production
+Đây là case dễ demo nhất vì xảy ra rất gần thời điểm release.
+
+Flow bạn nên nói:
+1. Deploy production xong.
+2. Team chạy smoke test.
+3. Smoke test fail.
+4. Team bấm `rollback_production` ngay.
+
+### 14.10. Rollback case 2 - Lỗi phát sinh sau vài phút do monitoring hoặc user report
+Đây là case thực tế hơn vì nhiều lỗi không lộ ngay lúc smoke test.
+
+Flow bạn nên nói:
+1. Deploy production pass.
+2. 5 đến 10 phút sau, monitoring tăng error rate hoặc user báo lỗi.
+3. Team xác minh nhanh lỗi đi theo release mới.
+4. Team bấm rollback.
+
+### 14.11. Rollback case 3 - Bad config hoặc secret sai
+Case này giúp nhấn mạnh rằng rollback không chỉ vì code lỗi.
+
+Flow bạn nên nói:
+1. Release mới không sai code.
+2. Nhưng config production hoặc secret runtime sai.
+3. Dịch vụ lỗi.
+4. Team rollback để khôi phục dịch vụ trước, sửa config sau.
+
+### 14.12. Rollback case 4 - Chỉ rollback traffic, chưa rollback artifact
+Case này phù hợp cho blue/green.
+
+Flow bạn nên nói:
+1. Green đã deploy xong.
+2. Team phát hiện lỗi.
+3. Team bấm `rollback_blue_green` để chuyển traffic về blue.
+4. Artifact ở green vẫn giữ lại để debug sau.
+
+### 14.13. Rollback case 5 - Dừng rollout giữa chừng trong rolling update
+Rolling rollback vẫn nên giải thích ở mức narrative, không cần job rollback thật trong repo này.
+
+Flow bạn nên nói:
+1. Rolling update đang update từng instance.
+2. Health check fail giữa chừng.
+3. Team dừng rollout.
+4. Team redeploy version ổn định cho các instance đã update.
+
+### 14.14. Flow quyết định rollback bạn có thể nói trên lớp
+Khi học viên hỏi “khi nào thì rollback”, bạn có thể nói theo flow này:
+1. Phát hiện tín hiệu lỗi.
+2. Xác minh lỗi có liên quan tới release mới hay không.
+3. Đánh giá mức độ ảnh hưởng.
+4. Nếu ảnh hưởng production và chưa có fix nhanh, rollback.
+5. Sau khi ổn định dịch vụ mới quay lại phân tích root cause.
+
+Câu nói gợi ý:
+> Trong production, ưu tiên đầu tiên là khôi phục dịch vụ. Root cause analysis là bước sau, không phải bước trước rollback.
+
+### 14.15. Câu kết riêng cho phần rollback
+Bạn có thể chốt phần này như sau:
+
+> Một deployment strategy tốt không chỉ giúp mình đi tới phiên bản mới an toàn hơn, mà còn giúp mình quay về phiên bản cũ nhanh hơn khi production có sự cố.
+
+### 14.16. Nếu muốn minh hoạ bằng version cũ
+Bạn có thể dùng ví dụ nói trên lớp như sau:
+- `v1.0.1` là bản đang chạy nhưng bị lỗi
+- `v1.0.0` là bản ổn định trước đó
+
+Luồng giải thích:
+1. `deploy_production` đưa `v1.0.1` lên production
+2. Team phát hiện lỗi
+3. `rollback_production` đưa production về `v1.0.0`
+4. Với blue/green, `rollback_blue_green` đưa active traffic về màu cũ
+
+### 14.17. Thông điệp chốt cho học viên
+> Trong demo này, rollback không phải phần nói miệng nữa. Nó là manual action thật trên GitLab UI mà team có thể bấm khi production gặp sự cố.
+
+## 15. Cách giải thích file output để học viên dễ hình dung
+
+Nếu muốn minh hoạ local hoặc artifact, giải thích như sau:
+- `preview/` chứa HTML đã render theo môi trường
+- `state/dev.json`, `state/staging.json`, `state/production.json` mô tả trạng thái deploy
+- `state/production-history.json` lưu current version và previous version để phục vụ rollback production
+- `state/rolling.log` mô phỏng rolling update log
+- `state/blue-green.json` mô phỏng active color sau blue/green
+
+Bạn cũng có thể chạy local nếu cần minh hoạ nhanh:
+
+```bash
+CI_COMMIT_SHORT_SHA=demo123 sh scripts/deploy-dev.sh
+CI_COMMIT_SHORT_SHA=demo456 sh scripts/deploy-staging.sh
+CI_COMMIT_TAG=v1.0.0 sh scripts/deploy-production.sh
+CI_COMMIT_TAG=v1.0.1 sh scripts/deploy-production.sh
+sh scripts/rollback-production.sh
+sh scripts/simulate-rolling.sh
+sh scripts/simulate-blue-green.sh
+sh scripts/rollback-blue-green.sh
+```
+
+## 16. Thứ tự trình bày đề xuất cho 2 tiếng
+
+## 15. Cách giải thích file output để học viên dễ hình dung
 Nếu muốn minh hoạ local hoặc artifact, giải thích như sau:
 - `preview/` chứa HTML đã render theo môi trường
 - `state/dev.json`, `state/staging.json`, `state/production.json` mô tả trạng thái deploy
@@ -392,7 +566,7 @@ sh scripts/simulate-rolling.sh
 sh scripts/simulate-blue-green.sh
 ```
 
-## 15. Thứ tự trình bày đề xuất cho 2 tiếng
+## 16. Thứ tự trình bày đề xuất cho 2 tiếng
 
 ### Phần 1 - Bối cảnh và mục tiêu (10-15 phút)
 - Môi trường là gì
@@ -427,7 +601,7 @@ sh scripts/simulate-blue-green.sh
 - Hỏi lại học viên: khi nào dùng `dev`, `staging`, manual approval
 - Nhắc lại khác biệt rolling vs blue/green
 
-## 16. Checklist thao tác trước giờ bắt đầu
+## 17. Checklist thao tác trước giờ bắt đầu
 - [ ] Repo đã push lên GitLab
 - [ ] `main` là default branch
 - [ ] Runner `runner_01` đang online
@@ -438,7 +612,7 @@ sh scripts/simulate-blue-green.sh
 - [ ] Đảm bảo branch `develop` tồn tại hoặc sẵn sàng tạo nó live
 - [ ] Đảm bảo chưa có tag `v1.0.0` bị dùng trước đó; nếu có, dùng `v1.0.1`
 
-## 17. Troubleshooting nhanh
+## 18. Troubleshooting nhanh
 
 ### Runner không pick up job
 Kiểm tra:
@@ -479,7 +653,7 @@ git tag v1.0.1
 git push origin v1.0.1
 ```
 
-## 18. Cách kết thúc buổi demo
+## 19. Cách kết thúc buổi demo
 Có thể chốt như sau:
 
 > Hôm nay chúng ta đã thấy một pipeline có thể phản ứng khác nhau tuỳ branch và tag, map sang các environment khác nhau, đồng thời dùng manual gate để kiểm soát production. Chúng ta cũng đã so sánh rolling update và blue/green để hiểu cách triển khai an toàn hơn khi hệ thống lớn dần.

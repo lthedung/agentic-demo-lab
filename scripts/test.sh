@@ -76,6 +76,16 @@ grep -q 'GitLab CI/CD Session 4 Demo' dist/index.html || {
   exit 1
 }
 
+[ -x scripts/rollback-production.sh ] || {
+  echo "scripts/rollback-production.sh is not executable" >&2
+  exit 1
+}
+
+[ -x scripts/rollback-blue-green.sh ] || {
+  echo "scripts/rollback-blue-green.sh is not executable" >&2
+  exit 1
+}
+
 rm -rf preview
 mkdir -p preview
 
@@ -100,12 +110,38 @@ grep -q '"environment": "staging"' state/staging.json || {
 }
 
 CI_COMMIT_TAG=v1.0.0 sh scripts/deploy-production.sh
+CI_COMMIT_TAG=v1.0.1 sh scripts/deploy-production.sh
 [ -f state/production.json ] || {
   echo "Missing state/production.json" >&2
   exit 1
 }
 grep -q '"environment": "production"' state/production.json || {
   echo "Production state missing environment" >&2
+  exit 1
+}
+[ -f state/production-history.json ] || {
+  echo "Missing state/production-history.json" >&2
+  exit 1
+}
+grep -q '"currentVersion": "v1.0.1"' state/production-history.json || {
+  echo "Production history missing current version" >&2
+  exit 1
+}
+grep -q '"previousVersion": "v1.0.0"' state/production-history.json || {
+  echo "Production history missing previous version" >&2
+  exit 1
+}
+sh scripts/rollback-production.sh
+grep -q '"version": "v1.0.0"' state/production.json || {
+  echo "Production rollback did not restore previous version" >&2
+  exit 1
+}
+grep -q '"lastAction": "rollback"' state/production-history.json || {
+  echo "Production history missing rollback action" >&2
+  exit 1
+}
+grep -q '"rolledBackTo": "v1.0.0"' state/production-history.json || {
+  echo "Production history missing rollback target" >&2
   exit 1
 }
 
@@ -138,6 +174,11 @@ grep -q '"activeColor": "green"' state/blue-green.json || {
   echo "Blue-green state missing active green color" >&2
   exit 1
 }
+sh scripts/rollback-blue-green.sh
+grep -q '"activeColor": "blue"' state/blue-green.json || {
+  echo "Blue-green rollback did not restore blue as active color" >&2
+  exit 1
+}
 
 [ -f .gitlab-ci.yml ] || {
   echo "Missing .gitlab-ci.yml" >&2
@@ -166,6 +207,16 @@ grep -q 'simulate_rolling_update:' .gitlab-ci.yml || {
 
 grep -q 'simulate_blue_green:' .gitlab-ci.yml || {
   echo "Pipeline missing blue-green simulation job" >&2
+  exit 1
+}
+
+grep -q 'rollback_production:' .gitlab-ci.yml || {
+  echo "Pipeline missing rollback_production job" >&2
+  exit 1
+}
+
+grep -q 'rollback_blue_green:' .gitlab-ci.yml || {
+  echo "Pipeline missing rollback_blue_green job" >&2
   exit 1
 }
 

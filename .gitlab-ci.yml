@@ -77,8 +77,11 @@ simulate_rolling_update:
   <<: *deploy_strategy_template
   script:
     - sh scripts/simulate-rolling.sh
+  environment:
+    name: production
+    url: https://example.invalid/production
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_TAG =~ /^v.*/'
       when: manual
 
 simulate_blue_green:
@@ -89,5 +92,27 @@ simulate_blue_green:
     name: production
     url: https://example.invalid/production-green
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_TAG =~ /^v.*/'
+      when: manual
+
+rollback_production:
+  <<: *deploy_template
+  script:
+    - sh scripts/rollback-production.sh
+  environment:
+    name: production
+    url: https://example.invalid/production
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v.*/'
+      when: manual
+
+rollback_blue_green:
+  <<: *deploy_strategy_template
+  script:
+    - sh scripts/rollback-blue-green.sh
+  environment:
+    name: production
+    url: https://example.invalid/production-blue
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v.*/'
       when: manual
