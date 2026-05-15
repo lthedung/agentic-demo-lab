@@ -3,6 +3,7 @@ stages:
   - test
   - deploy
   - strategy
+  - rollback
 
 default:
   tags:
@@ -97,6 +98,10 @@ simulate_blue_green:
 
 rollback_production:
   <<: *deploy_template
+  stage: rollback
+  needs:
+    - job: deploy_production
+      artifacts: true
   script:
     - sh scripts/rollback-production.sh
   environment:
@@ -108,6 +113,10 @@ rollback_production:
 
 rollback_blue_green:
   <<: *deploy_strategy_template
+  stage: rollback
+  needs:
+    - job: simulate_blue_green
+      artifacts: true
   script:
     - sh scripts/rollback-blue-green.sh
   environment:

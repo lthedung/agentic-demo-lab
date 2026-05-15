@@ -7,8 +7,10 @@ This repository supports a 2-hour workshop on environment management and deploym
 - `feature/*` runs validation only
 - `develop` deploys to `dev`
 - `main` deploys to `staging`
-- tag `v1.0.0` exposes manual production deployment and rollback
-- release tag pipelines also expose manual production strategy demos for rolling update, blue/green, and blue/green rollback
+- tag `v1.0.0` exposes manual production deployment
+- `rollback_production` is a downstream manual job that reuses the `state/` artifact from `deploy_production`
+- `simulate_blue_green` prepares blue/green state, and `rollback_blue_green` is a downstream manual job that reuses that artifact state
+- `simulate_rolling_update` remains a strategy demo only
 
 ## Runner
 Use GitLab Runner tag `runner_01` so students can see the runner pick up jobs and execute the pipeline.
@@ -30,6 +32,7 @@ sh scripts/rollback-blue-green.sh
 - Show the Pipeline view after each branch/tag scenario.
 - Open the Environments page to explain deployment history.
 - Pause at the manual production gate before clicking deploy.
+- Explain that rollback jobs are downstream jobs that consume `preview/` and `state/` artifacts from their upstream deploy/simulation jobs.
 - After production deploy, trigger rollback once so students see recovery as a real GitLab action.
 - Use the strategy logs to explain rolling update and blue/green trade-offs.
 - Trigger blue/green rollback to show traffic switching back to the previous active color.

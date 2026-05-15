@@ -190,6 +190,11 @@ grep -q '^stages:' .gitlab-ci.yml || {
   exit 1
 }
 
+grep -q '^  - rollback$' .gitlab-ci.yml || {
+  echo "Pipeline missing rollback stage" >&2
+  exit 1
+}
+
 grep -q 'deploy_production:' .gitlab-ci.yml || {
   echo "Pipeline missing deploy_production job" >&2
   exit 1
@@ -215,8 +220,28 @@ grep -q 'rollback_production:' .gitlab-ci.yml || {
   exit 1
 }
 
+grep -A4 'rollback_production:' .gitlab-ci.yml | grep -q 'stage: rollback' || {
+  echo "rollback_production is not in rollback stage" >&2
+  exit 1
+}
+
+grep -A6 'rollback_production:' .gitlab-ci.yml | grep -q 'job: deploy_production' || {
+  echo "rollback_production is not linked to deploy_production artifacts" >&2
+  exit 1
+}
+
 grep -q 'rollback_blue_green:' .gitlab-ci.yml || {
   echo "Pipeline missing rollback_blue_green job" >&2
+  exit 1
+}
+
+grep -A4 'rollback_blue_green:' .gitlab-ci.yml | grep -q 'stage: rollback' || {
+  echo "rollback_blue_green is not in rollback stage" >&2
+  exit 1
+}
+
+grep -A6 'rollback_blue_green:' .gitlab-ci.yml | grep -q 'job: simulate_blue_green' || {
+  echo "rollback_blue_green is not linked to simulate_blue_green artifacts" >&2
   exit 1
 }
 

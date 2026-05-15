@@ -329,14 +329,15 @@ Mở **Operate > Environments** và chỉ cho học viên thấy `production`.
 
 ### 11.8. Demo rollback production thật trên GitLab UI
 Ngay sau khi demo deploy production, bạn có thể demo rollback thật luôn:
-1. Ở cùng pipeline tag release, chỉ cho học viên thấy job `rollback_production`.
-2. Giải thích rằng job này sẽ đưa production về version trước đó đã được lưu trong state history.
-3. Bấm **Play** cho job `rollback_production`.
-4. Mở log job để học viên thấy các dòng như:
+1. Ở cùng pipeline tag release, chỉ cho học viên thấy `rollback_production` nằm ở downstream `rollback` stage sau `deploy_production`.
+2. Giải thích rằng job này không dựa vào state cục bộ trong repo, mà tải lại artifact `state/` do `deploy_production` tạo ra.
+3. Nói rõ file trọng tâm là `state/production-history.json` bên trong artifact đó.
+4. Bấm **Play** cho job `rollback_production`.
+5. Mở log job để học viên thấy các dòng như:
    - `Current production version: v1.0.1`
    - `Rolling back to: v1.0.0`
    - `Production rollback complete`
-5. Mở lại **Operate > Environments** và giải thích rằng production đã quay về version trước.
+6. Mở lại **Operate > Environments** và giải thích rằng production đã quay về version trước.
 
 ### 11.9. Câu nói gợi ý
 > Đây là mô hình thường gặp trong doanh nghiệp: build và kiểm thử có thể tự động, nhưng bước vào production vẫn cần approval để đáp ứng kiểm soát thay đổi. Và khi release có sự cố, rollback cũng phải là một thao tác thật, nhanh và rõ ràng trên pipeline.
@@ -398,14 +399,15 @@ Sau khi demo xong production, rolling, và blue/green, bạn có thể chuyển 
 
 Các bước demo trên lớp:
 1. Mở lại pipeline của tag release đã chạy `deploy_production`.
-2. Chỉ cho học viên thấy job manual `rollback_production`.
-3. Giải thích rằng job này dùng production history để quay về version trước đó.
+2. Chỉ cho học viên thấy `rollback_production` là manual job ở `rollback` stage và có dependency trực tiếp vào `deploy_production`.
+3. Giải thích rằng job này tải lại artifact `state/` từ `deploy_production`, rồi đọc `state/production-history.json` để xác định version cần rollback.
 4. Bấm **Play** cho `rollback_production`.
 5. Mở log job và chỉ cho học viên các dòng:
    - `Current production version: ...`
    - `Rolling back to: ...`
    - `Production rollback complete`
-6. Mở lại **Operate > Environments** hoặc artifact/state để cho học viên thấy production đã quay về version cũ.
+6. Nếu muốn minh hoạ rõ hơn, mở artifact của `deploy_production` để chỉ cho học viên thấy `state/production-history.json` chính là input của rollback.
+7. Mở lại **Operate > Environments** hoặc artifact/state để cho học viên thấy production đã quay về version cũ.
 
 ### 14.3. Điều kiện để rollback production chạy được
 Nói rõ với học viên:
@@ -431,13 +433,14 @@ sh scripts/rollback-production.sh
 Các bước demo trên lớp:
 1. Ở pipeline của tag release, chạy `simulate_blue_green` trước.
 2. Mở log để học viên thấy flow `blue -> green`.
-3. Sau đó chỉ cho học viên thấy job manual `rollback_blue_green`.
-4. Bấm **Play** cho `rollback_blue_green`.
-5. Mở log job để học viên thấy dòng:
+3. Sau đó chỉ cho học viên thấy `rollback_blue_green` là manual job ở `rollback` stage và phụ thuộc vào `simulate_blue_green`.
+4. Giải thích rằng `rollback_blue_green` tải lại artifact `state/` từ `simulate_blue_green`, rồi dùng `state/blue-green.json` làm input.
+5. Bấm **Play** cho `rollback_blue_green`.
+6. Mở log job để học viên thấy dòng:
    - `Current active environment: green`
    - `Switching active environment: green -> blue`
    - `Blue/green rollback complete`
-6. Giải thích rằng đây là rollback theo traffic switch, không nhất thiết phải build lại artifact mới.
+7. Giải thích rằng đây là rollback theo traffic switch, không nhất thiết phải build lại artifact mới.
 
 ### 14.7. Cách tập local trước buổi dạy cho rollback blue/green
 Nếu muốn tập local trước khi lên lớp, bạn có thể chạy:
