@@ -1,0 +1,24 @@
+.deploy_template:
+  extends:
+    - .runner_01_job
+  stage: deploy
+  needs:
+    - build
+
+.deploy_preview_artifact:
+  extends:
+    - .artifact_1_week
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - preview/
+
+.production_state_artifact:
+  extends:
+    - .artifact_1_week
+  artifacts:
+    expire_in: 1 week
+    reports:
+      dotenv: state/production.env
+    paths:
+      - state/production.env
