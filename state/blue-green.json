@@ -1,7 +1,0 @@
-{
-  "version": "blue-green-demo",
-  "environment": "production",
-  "deployTime": "2026-05-15T03:25:13Z",
-  "strategy": "blue-green",
-  "activeColor": "blue"
-}
