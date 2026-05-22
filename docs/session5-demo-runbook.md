@@ -7,7 +7,7 @@ Runbook này dùng để xen kẽ demo GitLab UI với slide trong file [GitLab_
 | Agenda | Slide | Demo | Thời lượng | File chính |
 |---|---:|---|---:|---|
 | Pipeline Troubleshooting & Debugging | 4–9 | Job visibility, rules, runner `runner_01`, log debug | 8–10 phút | [.gitlab-ci.yml](../.gitlab-ci.yml), [scripts/test.sh](../scripts/test.sh) |
-| Pipeline Optimization | 10–15 | `needs`, artifacts, conditional jobs, rolling/blue-green manual jobs | 8–10 phút | [.gitlab-ci.yml](../.gitlab-ci.yml), [scripts/build.sh](../scripts/build.sh) |
+| Pipeline Optimization | 10–15 | cache, `needs`, artifacts, conditional jobs, rolling/blue-green manual jobs | 8–10 phút | [.gitlab-ci.yml](../.gitlab-ci.yml), [scripts/install-dependencies.sh](../scripts/install-dependencies.sh), [scripts/build.sh](../scripts/build.sh) |
 | Reusable CI/CD Templates | 16–18 | `include`, hidden jobs, `extends` | 8–10 phút | [.gitlab/ci/](../.gitlab/ci/) |
 | Security & Governance in CI/CD | 19–20 | protected/manual production deploy, rollback, variable scope | 8–10 phút | [.gitlab-ci.yml](../.gitlab-ci.yml), [scripts/deploy-production.sh](../scripts/deploy-production.sh) |
 
@@ -69,15 +69,24 @@ Câu chốt: log tốt giúp tìm command đầu tiên fail, không đoán mò.
 
 Câu chốt: `needs` làm pipeline rõ dependency và giảm thời gian chờ không cần thiết.
 
-### Kịch bản B — Artifact build output
+### Kịch bản B — Cache dependency simulation
 
 1. Mở job `build`.
-2. Tải hoặc xem artifact `preview/release.txt`.
-3. Mở [scripts/build.sh](../scripts/build.sh) để chỉ ra artifact được tạo từ version và SHA.
+2. Chỉ ra block `cache` trong [.gitlab-ci.yml](../.gitlab-ci.yml): key dựa trên [app/version.txt](../app/version.txt), path là `.demo-cache/`.
+3. Mở log `build`, tìm `Cache miss: installing dependency` ở lần đầu hoặc `Cache hit: dependency already exists` ở lần chạy sau.
+4. Mở [scripts/install-dependencies.sh](../scripts/install-dependencies.sh) để thấy dependency giả được lưu trong `.demo-cache/dependency.txt`.
+
+Câu chốt: cache là dữ liệu tạm để tăng tốc lần chạy sau, không phải output chính thức của job.
+
+### Kịch bản C — Artifact build output
+
+1. Vẫn trong job `build`, tải hoặc xem artifact `preview/release.txt`.
+2. Mở [scripts/build.sh](../scripts/build.sh) để chỉ ra artifact được tạo từ version và SHA.
+3. So sánh với cache: artifact là kết quả build được GitLab lưu kèm job.
 
 Câu chốt: cache dùng để tăng tốc, artifact dùng để truyền output chính thức giữa job.
 
-### Kịch bản C — Conditional jobs và strategy jobs
+### Kịch bản D — Conditional jobs và strategy jobs
 
 1. Trên branch `main` hoặc tag pipeline, chỉ ra `simulate_rolling_update` và `simulate_blue_green` là manual.
 2. Chạy `simulate_rolling_update`, xem log từng instance và health check.
@@ -155,10 +164,12 @@ Câu chốt: governance nằm ở branch protection, protected variables, runner
 
 ## Lệnh kiểm tra local
 
-Các lệnh dưới đây sẽ tạo hoặc cập nhật file trong [preview/](../preview/) và [state/](../state/). Nếu muốn chạy lại từ đầu, xoá các file sinh ra bằng `rm -f preview/*.txt state/*.env`.
+Các lệnh dưới đây sẽ tạo hoặc cập nhật file trong [preview/](../preview/), [state/](../state/) và cache local [.demo-cache/](../.demo-cache/). Nếu muốn chạy lại từ đầu, xoá các file sinh ra bằng `rm -f preview/*.txt state/*.env .demo-cache/dependency.txt`.
 
 ```bash
 sh scripts/test.sh
+sh scripts/install-dependencies.sh
+sh scripts/install-dependencies.sh
 sh scripts/build.sh
 CI_COMMIT_SHORT_SHA=demo123 sh scripts/deploy-dev.sh
 CI_COMMIT_SHORT_SHA=demo456 sh scripts/deploy-staging.sh
@@ -175,5 +186,6 @@ sh scripts/rollback-blue-green.sh
 - Job không xuất hiện: kiểm tra `rules`.
 - Job pending: kiểm tra runner `runner_01`, tag, protected runner và branch protection.
 - Job fail ở script: mở log, tìm command đầu tiên fail.
+- Cache không hit: kiểm tra `cache:key`, `cache:paths` và runner có hỗ trợ cache backend không.
 - Rollback không có state: kiểm tra artifact của job trước đó hoặc truyền biến demo `PREVIOUS_PRODUCTION_RELEASE`.
 - Template không apply: kiểm tra hidden job name trong `extends` có đúng dấu chấm ở đầu không.

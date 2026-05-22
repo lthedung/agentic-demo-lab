@@ -29,7 +29,14 @@ build:
   stage: build
   needs:
     - test
+  cache:
+    key:
+      files:
+        - app/version.txt
+    paths:
+      - .demo-cache/
   script:
+    - sh scripts/install-dependencies.sh
     - sh scripts/build.sh
   artifacts:
     when: always
