@@ -22,6 +22,18 @@ test:
   script:
     - sh scripts/test.sh
 
+
+parallel_test:
+  extends:
+    - .runner_01_job
+  stage: validate
+  needs:
+    - test
+  parallel: 3
+  interruptible: true
+  script:
+    - sh scripts/test-shard.sh
+
 build:
   extends:
     - .runner_01_job
@@ -29,6 +41,7 @@ build:
   stage: build
   needs:
     - test
+  interruptible: true
   cache:
     key:
       files:

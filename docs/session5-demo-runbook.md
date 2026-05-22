@@ -7,7 +7,7 @@ Runbook này dùng để xen kẽ demo GitLab UI với slide trong file [GitLab_
 | Agenda | Slide | Demo | Thời lượng | File chính |
 |---|---:|---|---:|---|
 | Pipeline Troubleshooting & Debugging | 4–9 | Job visibility, rules, runner `runner_01`, log debug | 8–10 phút | [.gitlab-ci.yml](../.gitlab-ci.yml), [scripts/test.sh](../scripts/test.sh) |
-| Pipeline Optimization | 10–15 | cache, `needs`, artifacts, conditional jobs, rolling/blue-green manual jobs | 8–10 phút | [.gitlab-ci.yml](../.gitlab-ci.yml), [scripts/install-dependencies.sh](../scripts/install-dependencies.sh), [scripts/build.sh](../scripts/build.sh) |
+| Pipeline Optimization | 10–15 | cache, `needs`, artifacts, `parallel`, `interruptible`, manual strategy jobs | 8–10 phút | [.gitlab-ci.yml](../.gitlab-ci.yml), [scripts/install-dependencies.sh](../scripts/install-dependencies.sh), [scripts/test-shard.sh](../scripts/test-shard.sh), [scripts/build.sh](../scripts/build.sh) |
 | Reusable CI/CD Templates | 16–18 | `include`, hidden jobs, `extends` | 8–10 phút | [.gitlab/ci/](../.gitlab/ci/) |
 | Security & Governance in CI/CD | 19–20 | protected/manual production deploy, rollback, variable scope | 8–10 phút | [.gitlab-ci.yml](../.gitlab-ci.yml), [scripts/deploy-production.sh](../scripts/deploy-production.sh) |
 
@@ -86,7 +86,23 @@ Câu chốt: cache là dữ liệu tạm để tăng tốc lần chạy sau, kh�
 
 Câu chốt: cache dùng để tăng tốc, artifact dùng để truyền output chính thức giữa job.
 
-### Kịch bản D — Conditional jobs và strategy jobs
+### Kịch bản D — Parallel test shards
+
+1. Mở pipeline graph.
+2. Chỉ ra job `parallel_test` bung thành 3 shard nhờ `parallel: 3`.
+3. Mở log từng shard, chỉ `CI_NODE_INDEX` và `CI_NODE_TOTAL` trong [scripts/test-shard.sh](../scripts/test-shard.sh).
+
+Câu chốt: `parallel` chia việc độc lập thành nhiều job để rút ngắn thời gian phản hồi.
+
+### Kịch bản E — Interruptible pipelines
+
+1. Mở [.gitlab-ci.yml](../.gitlab-ci.yml), chỉ `interruptible: true` ở `parallel_test` và `build`.
+2. Giải thích khi developer push commit mới lên cùng branch, GitLab có thể cancel job cũ còn đang chạy.
+3. Nhấn mạnh không nên dùng `interruptible` cho deploy/rollback production.
+
+Câu chốt: `interruptible` tiết kiệm runner cho job validation/build cũ, nhưng không dùng cho job có side effect production.
+
+### Kịch bản F — Conditional jobs và strategy jobs
 
 1. Trên branch `main` hoặc tag pipeline, chỉ ra `simulate_rolling_update` và `simulate_blue_green` là manual.
 2. Chạy `simulate_rolling_update`, xem log từng instance và health check.
@@ -170,6 +186,7 @@ Các lệnh dưới đây sẽ tạo hoặc cập nhật file trong [preview/](.
 sh scripts/test.sh
 sh scripts/install-dependencies.sh
 sh scripts/install-dependencies.sh
+CI_NODE_INDEX=1 CI_NODE_TOTAL=3 sh scripts/test-shard.sh
 sh scripts/build.sh
 CI_COMMIT_SHORT_SHA=demo123 sh scripts/deploy-dev.sh
 CI_COMMIT_SHORT_SHA=demo456 sh scripts/deploy-staging.sh
@@ -187,5 +204,7 @@ sh scripts/rollback-blue-green.sh
 - Job pending: kiểm tra runner `runner_01`, tag, protected runner và branch protection.
 - Job fail ở script: mở log, tìm command đầu tiên fail.
 - Cache không hit: kiểm tra `cache:key`, `cache:paths` và runner có hỗ trợ cache backend không.
+- Parallel không bung shard: kiểm tra `parallel` có nằm trong job thật, không nằm trong hidden template sai chỗ.
+- Interruptible không cancel job cũ: kiểm tra project có bật auto-cancel redundant pipelines và job có `interruptible: true`.
 - Rollback không có state: kiểm tra artifact của job trước đó hoặc truyền biến demo `PREVIOUS_PRODUCTION_RELEASE`.
 - Template không apply: kiểm tra hidden job name trong `extends` có đúng dấu chấm ở đầu không.
